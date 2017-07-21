@@ -5,6 +5,9 @@ import (
 	"net/http"
 	"encoding/json"
 	"github.com/gorilla/mux"
+
+	"database/sql"
+	_ "github.com/lib/pq"
 )
 
 // Create our test-data, will be replaced with persistant DB later on
@@ -19,6 +22,26 @@ type Chats struct {
 var chatCache []Chats
 
 func main() {
+	// Test to access database
+	db, err := sql.Open("postgres", "user=postgres dbname=chat sslmode=disable")
+	if err != nil {
+		panic(err)
+	}
+
+	rows, err := db.Query("SELECT * FROM chats;")
+	if err != nil {
+		panic(err)
+	}
+	defer rows.Close()
+
+	var chat Chats
+	for rows.Next() {
+	    rows.Scan(&chat)
+  		fmt.Println(rows)
+	}
+
+  db.Close()	
+
 	router := mux.NewRouter()
 	chatCache = append(chatCache, Chats{ID: "1", Timestamp: "2017-07-21", Username: "Tom", Message: "Hello all", Group: "lobby"})
 	chatCache = append(chatCache, Chats{ID: "2", Timestamp: "2017-07-21", Username: "Ebba", Message: "Hey brother", Group: "lobby"})
