@@ -13,7 +13,6 @@ import (
 // Create our test-data, will be replaced with persistant DB later on
 type Chats struct {
 	ID string `json:"id,omitempty"`
-	Timestamp string `json:"timestamp,omitempty"`
 	Username string `json:username,omitempty`
 	Message string `json:"message,omitempty"`
 	Group string `json:"group,omitempty"`
@@ -22,29 +21,9 @@ type Chats struct {
 var chatCache []Chats
 
 func main() {
-	// Test to access database
-	db, err := sql.Open("postgres", "user=postgres dbname=chat sslmode=disable")
-	if err != nil {
-		panic(err)
-	}
-
-	rows, err := db.Query("SELECT * FROM chats;")
-	if err != nil {
-		panic(err)
-	}
-	defer rows.Close()
-
-	var chat Chats
-	for rows.Next() {
-	    rows.Scan(&chat)
-  		fmt.Println(rows)
-	}
-
-  db.Close()	
-
 	router := mux.NewRouter()
-	chatCache = append(chatCache, Chats{ID: "1", Timestamp: "2017-07-21", Username: "Tom", Message: "Hello all", Group: "lobby"})
-	chatCache = append(chatCache, Chats{ID: "2", Timestamp: "2017-07-21", Username: "Ebba", Message: "Hey brother", Group: "lobby"})
+	chatCache = append(chatCache, Chats{ID: "1", Username: "Tom", Message: "Hello all", Group: "lobby"})
+	chatCache = append(chatCache, Chats{ID: "2", Username: "Ebba", Message: "Hey brother", Group: "lobby"})
 	// Routes
 	router.HandleFunc("/", defaultPath).Methods("GET")
 	router.HandleFunc("/api/data", returnAllData).Methods("GET")
@@ -63,18 +42,50 @@ func defaultPath(w http.ResponseWriter, r *http.Request) {
 }
 
 func returnAllData(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("A web user requested the /data path")
-	json.NewEncoder(w).Encode(chatCache)
+	// Access database
+	db, err := sql.Open("postgres", "user=postgres dbname=chat sslmode=disable")
+	if err != nil {
+		panic(err)
+	}
+
+	rows, err := db.Query("SELECT id, username, message, groupname FROM chats;")
+
+	if err != nil {
+		panic(err)
+	}
+	defer rows.Close()
+
+	var allChats []Chats
+
+	for rows.Next() {
+		var (
+			id string
+			username string
+			message string
+			groupname string
+		)
+
+		rows.Scan(&id, &username, &message, &groupname)
+		allChats = append(allChats, Chats{ID: id, Username: username, Message: message, Group: groupname})
+	}
+  db.Close()
+  // Return the data to the request
+	json.NewEncoder(w).Encode(allChats)
 }
 
 func createChatMsg (w http.ResponseWriter, r *http.Request) {
 	var chat Chats
+	json.NewDecoder(r.Body).Decode(&chat)
+	fmt.Println("Writing chat message to DB from user: ", chat.Username)
 
-	aTest := json.NewDecoder(r.Body).Decode(&chat)
-	fmt.Println("THE REQUEST BODY", aTest)
-	
-	fmt.Println("A user posted a chat to the API", chat)
-	chatCache = append(chatCache, chat)
+	db, err := sql.Open("postgres", "user=postgres dbname=chat sslmode=disable")
+	if err != nil {
+		panic(err)
+	}
+
+	db.QueryRow("INSERT INTO chats(username, message, groupname) VALUES ('" + chat.Username + "', ' " + chat.Message + "', '" + chat.Group + "');")
+
+	db.Close()
 	json.NewEncoder(w).Encode(chat)
 }
 
@@ -100,7 +111,3 @@ func deleteAChat (w http.ResponseWriter, r *http.Request) {
 	}
 	json.NewEncoder(w).Encode(chatCache)
 }
-
-
-
-

@@ -9,3 +9,7 @@ CREATE TABLE IF NOT EXISTS chats (
 INSERT INTO chats(username, message, groupname) VALUES (
 	'Tom', 'Hey everybody from psql', 'lobby'
 );
+
+INSERT INTO chats(username, message, groupname) VALUES (
+	'Ebba', 'This is Toms sister Ebba', 'lobby'
+);
