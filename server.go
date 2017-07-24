@@ -5,12 +5,10 @@ import (
 	"net/http"
 	"encoding/json"
 	"github.com/gorilla/mux"
-
 	"database/sql"
 	_ "github.com/lib/pq"
 )
 
-// Create our test-data, will be replaced with persistant DB later on
 type Chats struct {
 	ID string `json:"id,omitempty"`
 	Username string `json:username,omitempty`
@@ -24,8 +22,9 @@ func main() {
 	router := mux.NewRouter()
 	chatCache = append(chatCache, Chats{ID: "1", Username: "Tom", Message: "Hello all", Group: "lobby"})
 	chatCache = append(chatCache, Chats{ID: "2", Username: "Ebba", Message: "Hey brother", Group: "lobby"})
-	// Routes
-	router.HandleFunc("/", defaultPath).Methods("GET")
+	// Serving static files
+	router.PathPrefix("/").Handler(http.FileServer(http.Dir("./")))
+	// API Routes
 	router.HandleFunc("/api/data", returnAllData).Methods("GET")
 	router.HandleFunc("/api/data", createChatMsg).Methods("POST")
 	router.HandleFunc("/api/data/{room}", getChatsForRooms).Methods("GET")
@@ -33,12 +32,6 @@ func main() {
 	// Initalize the server
 	fmt.Println("Server is listening to port 1337")
 	http.ListenAndServe(":1337", router)
-}
-
-func defaultPath(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("A web user requested the / path")
-	var welcomeString string = "Welcome, try some of the API endpoints."
-	json.NewEncoder(w).Encode(welcomeString)
 }
 
 func returnAllData(w http.ResponseWriter, r *http.Request) {

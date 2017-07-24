@@ -4,13 +4,22 @@
     </head>
     <body>
         <h2>Hello World!</h2>
-        <h4>This is a Go server that serves static files.</h4>
-        <h4>Try some of my API endpoints:</h4>
+        <h4>This is a Go chat server with PostgreSQL</h4>
+        <h4>Try some of the API endpoints:</h4>
         <ul>
         	<li>
-        		/api/data
+        		"/api/data" GET will return all chat messages 
+        	</li>
+        	<li>
+        		"/api/data" POST allows a user to post a chat message
+        	</li>
+        	<li>
+        		"/api/data/{room}" GET returns all chat messages to a specific room
+        	</li>
+        	<li>
+        		"/api/data/{id}" DELETE enables a user to delete a chat message from the DB
         	</li>
         </ul>
-        Be well.
+        Have fun.
     </body>
 </html>
